@@ -19,16 +19,17 @@ export async function mealsRoutes(app: FastifyInstance) {
       request.body,
     )
 
-    await knex('meals').insert({
+    const meal = {
       id: randomUUID(),
       name,
       description,
       date_time: dateTime,
       diet,
       user_id: userId,
-    })
+    }
+    await knex('meals').insert(meal)
 
-    return reply.status(201).send()
+    return reply.status(201).send(meal)
   })
   app.get('/', { preHandler: [checkUserIdExists] }, async (request, reply) => {
     const userId = request.cookies.userId
@@ -61,16 +62,16 @@ export async function mealsRoutes(app: FastifyInstance) {
         request.body,
       )
 
-      await knex('meals')
-        .update({
-          name,
-          description,
-          date_time: dateTime,
-          diet,
-        })
-        .where({ id, user_id: userId })
+      const updateMeal = {
+        name,
+        description,
+        date_time: dateTime,
+        diet,
+      }
 
-      return reply.status(200).send()
+      await knex('meals').update(updateMeal).where({ id, user_id: userId })
+
+      return reply.status(200).send(updateMeal)
     },
   )
   app.delete(
@@ -131,6 +132,7 @@ export async function mealsRoutes(app: FastifyInstance) {
       const total = await knex('meals')
         .where('user_id', userId)
         .count('*', { as: 'total' })
+        .first()
       return total
     },
   )
@@ -146,6 +148,7 @@ export async function mealsRoutes(app: FastifyInstance) {
           diet: 'in',
         })
         .count('*', { as: 'in' })
+        .first()
       return totalIn
     },
   )
@@ -161,6 +164,7 @@ export async function mealsRoutes(app: FastifyInstance) {
           diet: 'out',
         })
         .count('*', { as: 'out' })
+        .first()
       return totalOut
     },
   )
@@ -213,7 +217,7 @@ export async function mealsRoutes(app: FastifyInstance) {
         })
       }
 
-      return { best }
+      return best
     },
   )
 }
