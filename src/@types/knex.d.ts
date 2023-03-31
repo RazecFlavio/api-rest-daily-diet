@@ -7,7 +7,7 @@ declare module 'knex/types/tables' {
       id: string
       name: string
       description: string
-      date_time: Date
+      date_time: string
       diet: 'in' | 'out'
       user_id: string
     }

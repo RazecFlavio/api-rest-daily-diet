@@ -16,8 +16,8 @@ Daily Diet API
 - [x] => Deve ser possível listar todas as refeições de um usuario
 - [x] => Deve ser possível visualizar uma única refeição
 - [ ] => Deve ser possível recuperar as metricas de um usuário:
-    -   Quantidade total de refeições registradas
-    -   Quantidade total de refeições dentro da dieta
-    -   Quantidade total de refeições fora da dieta
-    -   Melhor sequencia por dia de refeições dentro da dieta
+    - [x]  Quantidade total de refeições registradas
+    - [x]  Quantidade total de refeições dentro da dieta
+    - [x]  Quantidade total de refeições fora da dieta
+    - [ ]  Melhor sequencia por dia de refeições dentro da dieta
 - [x] => O usuário so pode visualizar, editar e apagar as refeições o qual ele criou.

@@ -5,16 +5,13 @@ import { knex } from '../database'
 import { checkUserIdExists } from '../midllewares/check-user-id-exists'
 
 export async function mealsRoutes(app: FastifyInstance) {
-  app.addHook('preHandler', async (request) => {
-    console.log('Rota de Meals: ', `${request.url}`)
-  })
   app.post('/', { preHandler: [checkUserIdExists] }, async (request, reply) => {
     const userId = request.cookies.userId
 
     const registerMealBodySchema = z.object({
       name: z.string().min(3),
       description: z.string(),
-      dateTime: z.coerce.date(),
+      dateTime: z.string().datetime(),
       diet: z.enum(['in', 'out']),
     })
 
@@ -54,7 +51,7 @@ export async function mealsRoutes(app: FastifyInstance) {
       const updateMealBodySchema = z.object({
         name: z.string().min(3),
         description: z.string(),
-        dateTime: z.coerce.date(),
+        dateTime: z.string().datetime(),
         diet: z.enum(['in', 'out']),
       })
 
@@ -120,6 +117,103 @@ export async function mealsRoutes(app: FastifyInstance) {
       return {
         meal,
       }
+    },
+  )
+
+  // metrics
+
+  app.get(
+    '/total',
+    { preHandler: [checkUserIdExists] },
+    async (request, reply) => {
+      const userId = request.cookies.userId
+
+      const total = await knex('meals')
+        .where('user_id', userId)
+        .count('*', { as: 'total' })
+      return total
+    },
+  )
+  app.get(
+    '/in',
+    { preHandler: [checkUserIdExists] },
+    async (request, reply) => {
+      const userId = request.cookies.userId
+
+      const totalIn = await knex('meals')
+        .where({
+          user_id: userId,
+          diet: 'in',
+        })
+        .count('*', { as: 'in' })
+      return totalIn
+    },
+  )
+  app.get(
+    '/out',
+    { preHandler: [checkUserIdExists] },
+    async (request, reply) => {
+      const userId = request.cookies.userId
+
+      const totalOut = await knex('meals')
+        .where({
+          user_id: userId,
+          diet: 'out',
+        })
+        .count('*', { as: 'out' })
+      return totalOut
+    },
+  )
+
+  app.get(
+    '/best',
+    { preHandler: [checkUserIdExists] },
+    async (request, reply) => {
+      const userId = request.cookies.userId
+      const meals = await knex('meals')
+        .select('date_time', 'diet')
+        .where('user_id', userId)
+        .orderBy('date_time')
+
+      const best = {
+        day: '',
+        quantity: 0,
+      }
+      if (meals.length) {
+        let count = 0
+        let day = ''
+        let totalMeals = meals.length
+        meals.forEach((item) => {
+          totalMeals--
+          const currentDay = new Date(item.date_time).toDateString()
+          if (day !== currentDay || totalMeals === 0) {
+            if (best.quantity < count) {
+              best.day = day
+              best.quantity = count
+              count = 0
+            }
+            day = currentDay
+            if (item.diet === 'in') {
+              count++
+            } else {
+              if (count > best.quantity) {
+                best.day = currentDay
+                best.quantity = count
+              } else {
+                count = 0
+              }
+            }
+          } else {
+            if (item.diet === 'in') {
+              count++
+            } else {
+              count = 0
+            }
+          }
+        })
+      }
+
+      return { best }
     },
   )
 }
